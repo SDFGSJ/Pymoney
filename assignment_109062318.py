@@ -1,7 +1,7 @@
 import sys
 
-expense_list=[]
-cost_list=[]
+expense_list=[] #a list of (str,int) pair
+cost_list=[]    #a list of int
 mymoney=0
 
 def read_from_file():   #add return true,false
@@ -10,10 +10,10 @@ def read_from_file():   #add return true,false
         with open("myrecord.txt",'r') as fh:
             #check if the file is empty
             content=fh.readlines()
-            print("file content=",content)
+            #print("[debug]file content=",content)
 
             if len(content)==0:
-                sys.stderr.write("[Load failed]: myrecord.txt is empty.\n")
+                sys.stderr.write("[Load failed]:myrecord.txt is empty.\n")
                 return False
 
             #return the position to the beginning
@@ -25,15 +25,15 @@ def read_from_file():   #add return true,false
 
                 if len(single_record)==2:
                     expense_list.append(tuple(single_record))   #have to convert to tuple so that deletion works
-                    cost_list.append(int(single_record[1])) #remember to convert to int
+                    cost_list.append(int(single_record[1])) #remember to convert cost to int
                 else:
                     sys.stderr.write("failed to parse the record due to unmatched length(it should be 2)\n")
 
-            print("[debug: in is_file_exist()]expense_list=",expense_list)
-            print("[debug: in is_file_exist()]cost_list=",cost_list)
+            #print("[debug: in is_file_exist()]expense_list=",expense_list)
+            #print("[debug: in is_file_exist()]cost_list=",cost_list)
     except FileNotFoundError:   #first time run this program
         try:
-            #user input initial amount of money
+            #user input initial amount of money if first time use
             mymoney = int(input("How much money do you have? "))
         except ValueError:
             sys.stderr.write("Invalid value for money. Set to 0 by default.\n")
@@ -62,7 +62,7 @@ def myadd():    #need to check if user enter nothing
     try:
         #user input a record (blank-seperated)
         user_input=input("Add an expense or income record with description and amount:").split()
-        print("user_input=",user_input) #it's a list of str
+        #print("[debug]user_input=",user_input) #it's a list of str
 
         #check its length
         if len(user_input)==2:
@@ -73,12 +73,12 @@ def myadd():    #need to check if user enter nothing
             return
 
         record_tuple=tuple(user_input)  #change to tuple to prevent mutation
-        print("record_tuple=",record_tuple)
+        #print("[debug]record_tuple=",record_tuple)
 
         expense_list.append(record_tuple)
         cost_list.append(record_tuple[1])    #add money to cost_list
     except ValueError:
-        print("user_input=",user_input) #it's a list of str
+        #print("[debug]user_input=",user_input) #it's a list of str
         sys.stderr.write(f"can't convert the price '{user_input[1]}' to int, the format should be '<description> <price>'\n")
 
 def myview():
@@ -94,7 +94,7 @@ def mydelete():
     try:
         #user input a record he/she wants to delete(blank-seperated)
         user_input=input("Which record do you want to delete? ").split()
-        print("user_input=",user_input) #it's a list of str
+        #print("[debug]user_input=",user_input) #it's a list of str
 
         #check its length
         if len(user_input)==2:
@@ -106,14 +106,17 @@ def mydelete():
 
 
         delete_record_tuple=tuple(user_input)   #delete_record_tuple: (description('str'), cost('int'))
-        print("[debug]delete_record_tuple=", delete_record_tuple)
+        #print("[debug]delete_record_tuple=", delete_record_tuple)
 
-        to_be_deleted_list=[]
+        to_be_deleted_list=[]   #record the index to be deleted
+        #want to know the index to be deleted,so use enumerate()
         for rec in enumerate(expense_list): #rec is a tuple.(idx, (description('str'), cost('int')))
             #print(rec)
             if delete_record_tuple==rec[1]:
-                to_be_deleted_list.append(rec)
+                to_be_deleted_list.append(rec[0])   #append the index to the list
         #print("[debug]to_be_delete_list=",to_be_deleted_list)
+        #print("[debug]expense_list=",expense_list)
+        #print("[debug]cost_list",cost_list)
 
 
         if len(to_be_deleted_list) == 0:  #the record to be deleted doesn't exist in expense_list
@@ -121,32 +124,32 @@ def mydelete():
             tmp_list=[delete_record_tuple[0], str(delete_record_tuple[1])]
             print(f"there's no such record like '{' '.join(tmp_list)}'")
             return False
-        elif len(to_be_deleted_list) == 1:  #exactly 1 record matched
-            expense_list.remove(to_be_deleted_list[0][1])
-            cost_list.remove(to_be_deleted_list[0][1][1])
+        elif len(to_be_deleted_list) == 1:  #exactly 1 record matched,simply pop the index
+            expense_list.pop(to_be_deleted_list[0])
+            cost_list.pop(to_be_deleted_list[0])
             return True #delete success
         else:
-            print(f"there are {len(to_be_deleted_list)} records,which one do you want to delete? ")
-            idx_list=[]
-            for rec in to_be_deleted_list:
-                idx_list.append(rec[0])
-                tmp_list=[rec[1][0], str(rec[1][1])]    #rec looks like (idx, (description('str'), cost('int')))
-                print(f"{' '.join(tmp_list)} at index {rec[0]}")
+            tmp_list=[user_input[0], str(user_input[1])]
+            print(f"there are {len(to_be_deleted_list)} records of '{' '.join(tmp_list)}',which one do you want to delete? ")
+
+            #show all the matched content to the user
+            for idx in to_be_deleted_list:
+                print(f"'{' '.join(tmp_list)}' at index {idx}")
 
             try:
                 idx=int(input("Enter the index to be deleted: "))    #user enter which idx to be deleted
 
-                if idx not in idx_list:
+                if idx not in to_be_deleted_list:
                     print("invalid index!")
                     return False    #deletion failed
                 else:
-                    expense_list.pop(idx)
-                    cost_list.remove(to_be_deleted_list[idx][1][1])
+                    expense_list.pop(idx)   #simply pop the index
+                    cost_list.pop(idx)
                     return True #delete success
-            except:
+            except ValueError:
                 sys.stderr.write("the index should be a number. Please try again!\n")
     except ValueError:
-        print("user_input=",user_input) #it's a list of str
+        #print("[debug]user_input=",user_input) #it's a list of str
         sys.stderr.write(f"can't convert the price '{user_input[1]}' to int, the format should be '<description> <price>'\n")
 
 
@@ -169,12 +172,12 @@ if __name__=='__main__':
                 else:
                     print("delete failed!")
             elif operation=="exit":
-                print("[debug]expense_list=",expense_list)
-                print("[debug]cost_list",cost_list)
+                #print("[debug]expense_list=",expense_list)
+                #print("[debug]cost_list",cost_list)
                 write_to_file() #write the data into myrecord before leaving
                 break;
             else:
                 print("Invalid command. Try again.")
             
-            print("[debug]expense_list=",expense_list)
-            print("[debug]cost_list",cost_list)
+            #print("[debug]expense_list=",expense_list)
+            #print("[debug]cost_list",cost_list)

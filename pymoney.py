@@ -20,18 +20,26 @@ def read_from_file():
             fh.seek(0)
             try:
                 myMoney=int(fh.readline())
-            except:
-                sys.stderr.write("can't convert mymoney to int,set to 0 by default.\n")
+            except ValueError as v:
+                sys.stderr.write(str(v)+"set mymoney to 0 by default\n")
+                myMoney=0
 
             for rec in fh.readlines():
                 single_record=rec.split()   #a list of str
+
                 if len(single_record)==3:
+                    #check if the category is valid.if not,skip this record
+                    if not is_category_valid(single_record[0],categories):
+                        sys.stderr.write(f"'{single_record[0]}' is not in categories.\n")
+                        sys.stderr.write(f"'{rec[:-1]}' will not be written into your record.\n")
+                        continue
+
                     try:
                         single_record[2]=int(single_record[2])  #change the price from str to int
-                    except:
-                        sys.stderr.write("can't convert to int.\n")
-                    expenseList.append(tuple(single_record))   #have to convert to tuple so that deletion works
-                    costList.append(single_record[2])
+                        expenseList.append(tuple(single_record))   #have to convert to tuple so that deletion works
+                        costList.append(single_record[2])
+                    except ValueError as v:
+                        sys.stderr.write(str(v)+'\n')
                 else:
                     sys.stderr.write(f"failed to parse '{' '.join(single_record)}' due to unmatched length(it should be 3)\n")
                     sys.stderr.write(f"'{' '.join(single_record)}' will not be written into your record\n")
@@ -119,15 +127,15 @@ Fail to add a record.
         return
 
     query_result=find_subcategories(category_query,categories)
-    print("[debug]query_result=",query_result)
+    #print("[debug]query_result=",query_result)
 
     find_result=list(filter(lambda rec:rec[0] in query_result, records))
     tmp_cost_list=[c[2] for c in find_result]   #get the cost of each matched record
 
-    print("[debug]tmp_cost_list=",tmp_cost_list)
-    print("[debug]find_result=",find_result)
+    #print("[debug]tmp_cost_list=",tmp_cost_list)
+    #print("[debug]find_result=",find_result)
 
-    print("Here's your expense and income records under category '{category_query}':")
+    print(f"Here's your expense and income records under category '{category_query}':")
     print(f"{'Category':<20}{'Description':^20}{'Amount':>20}")   #both record[0],[1],[2] are strings
     print("=" * 60)
     for f in find_result:
@@ -187,7 +195,7 @@ def myview(myMoney, expenseList, costList):
 def mydelete(expenseList, costList):
     try:
         #user input a record he/she wants to delete(blank-seperated)
-        user_input=input("Which record do you want to delete? ").split()    #it's a list of str
+        user_input=input("Which record do you want to delete? ").split()    #a list of str
         #print("[debug]user_input=",user_input)
 
         #check its length
@@ -195,8 +203,8 @@ def mydelete(expenseList, costList):
             #check its content
             try:
                 user_input[2]=int(user_input[2])    #always convert the price to int
-            except:
-                sys.stderr.write("can't convert to int.\n")
+            except ValueError as v:
+                sys.stderr.write(str(v)+'\n')
         else:   #invalid length
             sys.stderr.write("invalid input format, should be '<category> <description> <price>'\n")
             return expenseList, costList
@@ -252,8 +260,9 @@ def mydelete(expenseList, costList):
 
 #expense_list => a list of (str,int) pair
 #cost_list => a list of int
-mymoney, expense_list, cost_list=read_from_file()    #read the data from myrecord.txt
+
 categories=initialize_categories()
+mymoney, expense_list, cost_list=read_from_file()    #read the data from myrecord.txt
 
 while True:
     operation=input("What do you want to do (add / view / delete / view categories / find / exit)?")

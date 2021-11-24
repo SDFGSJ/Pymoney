@@ -1,3 +1,4 @@
+#haven't check the spec carefully
 import sys
 
 class Record:
@@ -76,7 +77,11 @@ class Records:
         except ValueError as v:
             sys.stderr.write(str(v))
 
-    def add(self,user_input,categories):   #pass in user_input:a list of str
+    def add(self,user_input,categories):
+        """
+        user_input:a list of str
+        add the record with '<category> <description> <amount>' if it is a valid category
+        """
         try:
             #check its length
             if len(user_input)!=3:
@@ -101,6 +106,7 @@ class Records:
             sys.stderr.write(str(v) + "the format should be '<category> <description> <price>'\n")
             
     def view(self):
+        """print the records in a neat format"""
         print("Here's your expense and income records:")
         print(f"{'Category':<20}{'Description':^20}{'Amount':>20}")
         print("=" * 60)
@@ -110,6 +116,11 @@ class Records:
         print(f"Now you have {self._mymoney + sum(self._cost_list)} dollars.")   #can pass an iterable to sum()
 
     def delete(self, user_input):
+        """
+        user_input:a list of str
+        delete the record user wants to delete
+        if there are multiple records,this will ask the user which one to be deleted
+        """
         try:
             #check its length
             if len(user_input)!=3:
@@ -163,6 +174,7 @@ class Records:
             sys.stderr.write(str(v) + "the format should be '<category> <description> <price>'\n")
 
     def find(self,query_result):
+        """find a certian category and all subcategories under it,and print their records"""
         find_result=list(filter(lambda rec:rec.category in query_result, self._expense_list))
         tmp_cost_list=[c.amount for c in find_result]   #get the cost of each matched record
 
@@ -175,6 +187,7 @@ class Records:
         print(f"The total amount above is {self._mymoney + sum(tmp_cost_list)}.")   #can pass an iterable to sum()
 
     def save(self):
+        """write the records to file before exit"""
         try:
             with open("myrecord.txt",'w') as fh:
                 fh.write(str(self._mymoney))
@@ -194,6 +207,7 @@ class Categories():
         self._categories=['expense', ['food', ['meal', 'snack', 'drink'], 'transportation', ['bus', 'railway']], 'income', ['salary', 'bonus']]
 
     def view(self, categories, level=0):
+        """print the records with neat format"""
         if type(categories) in {list,tuple}:
             for child in categories:
                 self.view(child,level+1)
@@ -215,6 +229,7 @@ class Categories():
     def find_subcategories(self, category, categories):
         """
         categories: a predefined list
+        find a certain category and all subcategories under it
         """
         if type(categories) in {list,tuple}:
             for v in categories:    #v is a sublist
@@ -230,6 +245,7 @@ class Categories():
         return True if category == categories else [] #return [] instead of False if not found
 
     def _flatten(self, l):
+        """convert the nested list to flatten list"""
         if type(l)==list:
             result=[]
             for child in l:
